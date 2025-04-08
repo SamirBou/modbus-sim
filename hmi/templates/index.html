@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FuelTech Control Panel</title>
+    <script src="/static/jquery.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a2639;
+            color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .card {
+            background-color: #3e4a61;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 16px rgba(0, 0, 0, 0.4);
+        }
+        h1 {
+            color: #c24d2c;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        h2 {
+            color: #d9dad7;
+            border-bottom: 2px solid #c24d2c;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #455a64;
+            transition: 0.4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: #d9dad7;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #c24d2c;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        .tank-container {
+            position: relative;
+            width: 100%;
+            height: 300px;
+            margin: 20px auto;
+            text-align: center;
+        }
+        .tank {
+            position: relative;
+            width: 80%;
+            height: 250px;
+            margin: 0 auto;
+            border: 5px solid #d9dad7;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        .tank-level {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(to top, #3498db, #2980b9);
+            transition: height 0.5s ease;
+            border-radius: 0 0 15px 15px;
+        }
+        .tank-level.warning {
+            background: linear-gradient(to top, #e74c3c, #c0392b);
+        }
+        .tank-value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+            z-index: 1;
+        }
+        .control-group {
+            margin: 15px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        input[type="range"] {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 10px;
+            border-radius: 5px;
+            background: #455a64;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #c24d2c;
+            cursor: pointer;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #c24d2c;
+            cursor: pointer;
+        }
+        .value-display {
+            margin-top: 8px;
+            font-size: 16px;
+            color: #d9dad7;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        .status-on {
+            background-color: #2ecc71;
+            box-shadow: 0 0 10px #2ecc71;
+        }
+        .status-off {
+            background-color: #7f8c8d;
+        }
+        .status-warning {
+            background-color: #e74c3c;
+            box-shadow: 0 0 10px #e74c3c;
+        }
+        .emergency-button {
+            display: block;
+            width: 100px;
+            height: 100px;
+            margin: 20px auto;
+            background-color: #e74c3c;
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            outline: none;
+            position: relative;
+            overflow: hidden;
+        }
+        .emergency-button:after {
+            content: "";
+            display: block;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            background-image: radial-gradient(circle, #ff9a8b 20%, transparent 10.01%);
+            background-repeat: no-repeat;
+            background-position: 50%;
+            transform: scale(10, 10);
+            opacity: 0;
+            transition: transform 0.5s, opacity 1s;
+        }
+        .emergency-button:active:after {
+            transform: scale(0, 0);
+            opacity: 0.3;
+            transition: 0s;
+        }
+        .emergency-button.active {
+            background-color: #c0392b;
+            transform: scale(0.95);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #d9dad7;
+            font-size: 0.9em;
+        }
+        .pump-animation {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 20px auto;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        .pump-animation.on {
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.4); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(46, 204, 113, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
+        }
+        .pump-icon {
+            width: 100%;
+            height: 100%;
+            background-color: #3e4a61;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: #d9dad7;
+        }
+        .pump-icon.on {
+            color: #2ecc71;
+        }
+    </style>
+</head>
+<body>
+    <h1>FuelTech Control Panel</h1>
+    
+    <div class="container">
+        <div class="card">
+            <h2>Tank Status</h2>
+            
+            <div class="tank-container">
+                <div class="tank">
+                    <div class="tank-level" id="tankLevel"></div>
+                    <div class="tank-value" id="tankValue">0%</div>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <div>
+                    <span class="status-indicator" id="overflowIndicator"></span>
+                    <span id="overflowStatus">Overflow Status: Unknown</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>System Controls</h2>
+            
+            <div id="flowControlsAutoMessage" style="display:none; color:#c24d2c; margin-bottom:15px; font-weight:bold; text-align:center; padding:5px; background-color:rgba(194, 77, 44, 0.1); border-radius:5px;">
+                Flow rates are automatically controlled in Auto mode
+            </div>
+            
+            <div class="control-group">
+                <label for="pumpSwitch">Pump Control:</label>
+                <label class="switch">
+                    <input type="checkbox" id="pumpSwitch">
+                    <span class="slider"></span>
+                </label>
+                <div id="pumpSwitchLabel">OFF</div>
+            </div>
+            
+            <div class="control-group">
+                <label for="inflowMode">Mode Selection:</label>
+                <label class="switch">
+                    <input type="checkbox" id="inflowMode">
+                    <span class="slider"></span>
+                </label>
+                <div id="inflowModeLabel">Automatic</div>
+            </div>
+            
+            <div class="control-group">
+                <div class="pump-animation" id="pumpAnimation">
+                    <div class="pump-icon" id="pumpIcon">⚙️</div>
+                </div>
+            </div>
+            
+            <button id="emergencyStop" class="emergency-button">EMERGENCY STOP</button>
+        </div>
+        
+        <div class="card">
+            <h2>Fuel System Controls</h2>
+            
+            <div id="flowControlsAutoMessage" style="display:none; color:#c24d2c; margin-bottom:15px; font-weight:bold; text-align:center; padding:5px; background-color:rgba(194, 77, 44, 0.1); border-radius:5px;">
+                Fuel flow rates are automatically controlled in Auto mode
+            </div>
+            
+            <div class="control-group">
+                <label for="inflowRate">Fuel Inlet Flow Rate:</label>
+                <input type="range" id="inflowRate" min="0" max="1000" value="0">
+                <div class="value-display">Rate: <span id="inflowRateValue">0</span> units/s</div>
+                <div>
+                    <span class="status-indicator" id="inflowMeterStatusIndicator"></span>
+                    <span id="inflowMeterStatus">Inlet Sensor: Unknown</span>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label for="outflowRate">Fuel Outlet Flow Rate:</label>
+                <input type="range" id="outflowRate" min="0" max="1000" value="0">
+                <div class="value-display">Rate: <span id="outflowRateValue">0</span> units/s</div>
+                <div>
+                    <span class="status-indicator" id="outflowMeterStatusIndicator"></span>
+                    <span id="outflowMeterStatus">Outlet Sensor: Unknown</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>FuelTech Control Panel Demo</p>
+    </div>
+
+    <script>
+        // Initial update
+        updateStatus();
+        
+        // Set up periodic updates every second
+        setInterval(updateStatus, 1000);
+        
+        // Add event listeners for controls
+        $('#pumpSwitch').change(function() {
+            var isChecked = $(this).prop('checked') ? 1 : 0;
+            $('#pumpSwitchLabel').text(isChecked ? 'ON' : 'OFF');
+            sendCommand('pumpSwitch', isChecked);
+        });
+        
+        $('#inflowMode').change(function() {
+            var isChecked = $(this).prop('checked') ? 1 : 0;
+            $('#inflowModeLabel').text(isChecked ? 'Manual' : 'Automatic');
+            sendCommand('inflowMode', isChecked);
+            
+            // Enable/disable both flow rate sliders based on mode
+            if (isChecked) {
+                // Manual mode - enable sliders
+                $('#inflowRate, #outflowRate').prop('disabled', false);
+                $('#inflowRate, #outflowRate').css('opacity', '1');
+            } else {
+                // Auto mode - disable sliders
+                $('#inflowRate, #outflowRate').prop('disabled', true);
+                $('#inflowRate, #outflowRate').css('opacity', '0.5');
+            }
+        });
+        
+        $('#inflowRate').on('input', function() {
+            $('#inflowRateValue').text($(this).val());
+        });
+        
+        $('#inflowRate').change(function() {
+            sendCommand('inflowRate', $(this).val());
+        });
+        
+        $('#outflowRate').on('input', function() {
+            $('#outflowRateValue').text($(this).val());
+        });
+        
+        $('#outflowRate').change(function() {
+            sendCommand('outflowRate', $(this).val());
+        });
+        
+        $('#emergencyStop').click(function() {
+            var currentStatus = $(this).hasClass('active');
+            $(this).toggleClass('active');
+            sendCommand('emergencyStop', currentStatus ? 0 : 1);
+        });
+        
+        // Function to fetch current status from server
+        function updateStatus() {
+            $.getJSON('/update', function(data) {
+                // Update tank level
+                var tankMaxVolume = data.maxVolume || 10000;
+                var tankLevelPercent = data.tankVolume !== null ? (data.tankVolume / tankMaxVolume * 100) : 0;
+                $('#tankLevel').css('height', tankLevelPercent + '%');
+                $('#tankValue').text(Math.round(tankLevelPercent) + '%');
+                
+                // Update overflow indicator
+                if (data.overflowed === 1) {
+                    $('#overflowIndicator').removeClass('status-off').addClass('status-warning');
+                    $('#overflowStatus').text('Overflow Status: OVERFLOW DETECTED');
+                    $('#tankLevel').addClass('warning');
+                } else if (data.overflowed === 0) {
+                    $('#overflowIndicator').removeClass('status-warning').addClass('status-off');
+                    $('#overflowStatus').text('Overflow Status: Normal');
+                    $('#tankLevel').removeClass('warning');
+                } else {
+                    $('#overflowIndicator').removeClass('status-warning status-off');
+                    $('#overflowStatus').text('Overflow Status: Unknown');
+                }
+                
+                // Update switch states
+                $('#pumpSwitch').prop('checked', data.pumpSwitchStatus === 1);
+                $('#pumpSwitchLabel').text(data.pumpSwitchStatus === 1 ? 'ON' : 'OFF');
+                
+                $('#inflowMode').prop('checked', data.inflowMode === 1);
+                $('#inflowModeLabel').text(data.inflowMode === 1 ? 'Manual' : 'Automatic');
+                
+                // Enable/disable both flow rate sliders based on mode
+                if (data.inflowMode === 1) {
+                    // Manual mode - enable sliders
+                    $('#inflowRate, #outflowRate').prop('disabled', false);
+                    $('#inflowRate, #outflowRate').css('opacity', '1');
+                    
+                    // Add border to show they are active
+                    $('.control-group').find('input[type="range"]').css('border', 'none');
+                } else {
+                    // Auto mode - disable sliders
+                    $('#inflowRate, #outflowRate').prop('disabled', true);
+                    $('#inflowRate, #outflowRate').css('opacity', '0.5');
+                    
+                    // Add a subtle border to show they are locked
+                    $('.control-group').find('input[type="range"]').css('border', '1px solid #c24d2c');
+                }
+                
+                // Add clear indication that controls are in auto mode
+                if (data.inflowMode === 0) {
+                    $('#flowControlsAutoMessage').show();
+                } else {
+                    $('#flowControlsAutoMessage').hide();
+                }
+                
+                // Update emergency stop button
+                if (data.emergencyStopStatus === 1) {
+                    $('#emergencyStop').addClass('active');
+                } else {
+                    $('#emergencyStop').removeClass('active');
+                }
+                
+                // Update pump animation without showing the unknown status text
+                if (data.pumpStatus === 1) {
+                    $('#pumpAnimation').addClass('on');
+                    $('#pumpIcon').addClass('on');
+                } else if (data.pumpStatus === 0) {
+                    $('#pumpAnimation').removeClass('on');
+                    $('#pumpIcon').removeClass('on');
+                } else {
+                    $('#pumpAnimation').removeClass('on');
+                    $('#pumpIcon').removeClass('on');
+                }
+                
+                // Update flow rates if not being edited
+                if (!$('#inflowRate').is(':focus')) {
+                    $('#inflowRate').val(data.inflowRate || 0);
+                    $('#inflowRateValue').text(data.inflowRate || 0);
+                }
+                
+                if (!$('#outflowRate').is(':focus')) {
+                    $('#outflowRate').val(data.outflowRate || 0);
+                    $('#outflowRateValue').text(data.outflowRate || 0);
+                }
+                
+                // Update sensor status
+                if (data.inflowMeterStatus === 1) {
+                    $('#inflowMeterStatusIndicator').removeClass('status-off').addClass('status-on');
+                    $('#inflowMeterStatus').text('Inlet Sensor: ACTIVE');
+                } else if (data.inflowMeterStatus === 0) {
+                    $('#inflowMeterStatusIndicator').removeClass('status-on').addClass('status-off');
+                    $('#inflowMeterStatus').text('Inlet Sensor: INACTIVE');
+                } else {
+                    $('#inflowMeterStatusIndicator').removeClass('status-on status-off');
+                    $('#inflowMeterStatus').text('Inlet Sensor: Unknown');
+                }
+                
+                if (data.outflowMeterStatus === 1) {
+                    $('#outflowMeterStatusIndicator').removeClass('status-off').addClass('status-on');
+                    $('#outflowMeterStatus').text('Outlet Sensor: ACTIVE');
+                } else if (data.outflowMeterStatus === 0) {
+                    $('#outflowMeterStatusIndicator').removeClass('status-on').addClass('status-off');
+                    $('#outflowMeterStatus').text('Outlet Sensor: INACTIVE');
+                } else {
+                    $('#outflowMeterStatusIndicator').removeClass('status-on status-off');
+                    $('#outflowMeterStatus').text('Outlet Sensor: Unknown');
+                }
+            }).fail(function() {
+                console.error('Failed to update status');
+            });
+        }
+        
+        // Function to send commands to server
+        function sendCommand(control, value) {
+            $.ajax({
+                url: '/write',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    control: control,
+                    value: value
+                }),
+                success: function(data) {
+                    console.log('Command sent successfully:', data);
+                    // Update status immediately after command
+                    updateStatus();
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error sending command:', error);
+                    // Refresh status to reset any invalid UI state
+                    updateStatus();
+                }
+            });
+        }
+    </script>
+</body>
+</html>
